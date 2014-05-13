@@ -45,4 +45,32 @@ namespace :alchemy do
     end
 
   end
+
+  namespace :i18n do
+
+    desc "Updates translation files with latest keys from German translation"
+    task :sync do
+      puts "Starting syncronization..."
+      file = File.expand_path("../config/locales/alchemy.de.yml", __FILE__)
+      data = YAML.load_file(file)['de']['alchemy']
+      Alchemy::I18n.available_locales.each do |locale|
+        next if locale == 'de'
+        puts "Updating #{locale} locale file"
+        old_file = File.expand_path("../config/locales/alchemy.#{locale}.yml", __FILE__)
+        old_data = YAML.load_file(old_file)
+        data.each do |key, value|
+          next if old_data[locale]['alchemy'][key].present?
+          if key.to_s.match /_/
+            new_key = key.to_s.humanize
+          else
+            new_key = key
+          end
+          old_data[locale]['alchemy'][key] = new_key
+        end
+        File.new("./config/locales/alchemy.#{locale}.yml", 'w') << old_data.to_yaml
+      end
+      puts "Done."
+    end
+
+  end
 end
